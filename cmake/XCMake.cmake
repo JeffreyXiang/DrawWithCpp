@@ -1,4 +1,4 @@
-# Print the content of a variable with title and prefix
+﻿# Print the content of a variable with title and prefix
 function(Xi_printList)
 	cmake_parse_arguments("ARG" "" "TITLE;PREFIX" "LIST" ${ARGN})
 	if(NOT ${ARG_TITLE} STREQUAL "")
@@ -18,6 +18,7 @@ function(Xi_addAllSubDirGlob path)
 			list(APPEND dirs ${item})
 		endif()
 	endforeach()
+	message(STATUS "")
 	Xi_printList(TITLE "directories:" PREFIX "- " LIST ${dirs})
 	foreach(dir ${dirs})
 		add_subdirectory(${dir})
@@ -54,15 +55,22 @@ function(Xi_groupAllSrcs)
 endfunction()
 
 # Get the name of the target from its path and folder name
-function(Xi_getTargetName rst targetPath)
-	file(RELATIVE_PATH targetRelPath "${PROJECT_SOURCE_DIR}/src" "${targetPath}")
+function(Xi_getTargetNameGlob rst targetPath)
+	file(RELATIVE_PATH targetRelPath "${PROJECT_SOURCE_DIR}/src" ${targetPath})
+	string(REPLACE "/" "_" targetName "${PROJECT_NAME}/${targetRelPath}")
+	set(${rst} ${targetName} PARENT_SCOPE) 
+endfunction()
+
+# A relative path version
+function(Xi_getTargetNameRel rst targetPath)
+	file(RELATIVE_PATH targetRelPath "${PROJECT_SOURCE_DIR}/src" "${PROJECT_SOURCE_DIR}/src/${targetPath}")
 	string(REPLACE "/" "_" targetName "${PROJECT_NAME}/${targetRelPath}")
 	set(${rst} ${targetName} PARENT_SCOPE) 
 endfunction()
 
 # A specific version, call in current target folder
 function(Xi_getCurTargetName rst)
-	Xi_getTargetName(targetName ${CMAKE_CURRENT_SOURCE_DIR})
+	Xi_getTargetNameGlob(targetName ${CMAKE_CURRENT_SOURCE_DIR})
 	set(${rst} ${targetName} PARENT_SCOPE) 
 endfunction()
 
@@ -193,3 +201,15 @@ macro(Xi_QtInit)
 	set(CMAKE_AUTORCC ON)
 	find_package(Qt5Widgets REQUIRED)
 endmacro()
+
+function(Xi_findPackage packageName)
+	message(STATUS "")
+	message(STATUS "Finding package: ${packageName}")
+	find_package(${packageName} REQUIRED)
+	#include_directories("${${packageName}_INCLUDE_DIRS}")
+	#link_directories("${${packageName}_LIBRARY_DIRS}")
+	#add_definitions("${${packageName}_DEFINITIONS}")
+	if(NOT ${packageName}_FOUND)
+		message(ERROR "${packageName} not found!")
+	endif()
+endfunction()
