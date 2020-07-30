@@ -354,7 +354,7 @@ Image& Image::insert(Image& src, Vector pos, Vector center, double height, doubl
 Image& Image::addText(string str, Vector pos, Vector center, double size, double theta, Font& font, Color color)
 {
     Image* text = new Image(str, font, color);
-    insert(*text, pos, center, size, theta, BICUBIC);
+    insert(*text, pos, center, size, theta, NEAREST);
     delete text;
     return *this;
 }

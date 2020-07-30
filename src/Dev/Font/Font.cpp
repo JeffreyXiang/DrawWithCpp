@@ -3,12 +3,13 @@
 Font::FontMatrix Font::getFontMatrix(char* data, char c)
 {
 	FontMatrix res;
-	res.width = ((uint16_t)*(data + (2 + height * height / 8) * (c - 32)) << 8) | ((uint8_t)*(data + (2 + height * height / 8) * (c - 32) + 1));
+	int offset = (2 + height * height / 8) * (c - 32);
+	res.width = ((uint16_t)*(data + offset) << 8) | ((uint8_t)*(data + offset + 1));
 	res.data = new bool[res.width * height];
 	for (int i = 0; i < height; i++)
 		for (int j = 0; j < res.width; j++)
 		{
-			res.data[i * res.width + j] = *(data + (2 + height * height / 8) * (c - 32) + 2 + height / 8 * i + j / 8) & (0x80 >> j % 8);
+			res.data[i * res.width + j] = *(data + offset + 2 + height / 8 * i + j / 8) & (0x80 >> j % 8);
 		}
 	return res;
 }
