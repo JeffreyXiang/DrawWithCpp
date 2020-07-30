@@ -15,7 +15,7 @@ int main()
         {
             image.setPixel(x, y, color.rgb(x / 4 + y, 255 - x / 4 - y, 127 + x / 4 - y));
         }
-    image.saveBMP("output.bmp");
+    image.saveBMP("../data/output.bmp");
     clock_t endTime = clock();
     cout << "Elapsed time: " << (double)(endTime - startTime) / CLOCKS_PER_SEC << "s\n";
     return 0;
