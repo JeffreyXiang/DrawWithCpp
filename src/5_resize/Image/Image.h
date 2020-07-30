@@ -8,6 +8,7 @@
 class Image
 {
     public:
+        //采样方法：（临近，双线性，双三次，LANCZOS）
         enum resampling {NEAREST, BILINEAR, BICUBIC, LANCZOS};
 
     private:
@@ -15,6 +16,7 @@ class Image
         uint32_t width;
         uint32_t height;
 
+        //卷积核
         typedef struct
         {
              function<double(double)> h;
