@@ -2,6 +2,7 @@
 #define IMAGE_H
 
 #include "Color/Color.h"
+#include "Figure/Figure.h"
 
 class Image
 {
@@ -19,6 +20,9 @@ class Image
 
         //将一像素点（以坐标(x, y)表示）设为特定颜色
         void setPixel(uint32_t x, uint32_t y, Color color);
+
+        //绘制 Figure
+        Image& draw(Figure& s);
 
         //保存为BMP
         void saveBMP(const char* filename);

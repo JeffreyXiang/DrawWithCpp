@@ -27,18 +27,10 @@ void Image::setPixel(uint32_t x, uint32_t y, Color color)
 
 Image& Image::draw(Figure& s)
 {
-    Color final;
-    double alpha;
     for (int u = 0; u < width; u++)
         for (int v = 0; v < height; v++)
-        {
-            alpha = -s.tSDF({ (double)u, (double)v }) + 0.5;
-            if (alpha > 0)
-            {
-                final = s.getAttribute().color;
-                setPixel(u, v, final);
-            }
-        }
+            if (s.tSDF({ (double)u, (double)v }) < 0)
+                setPixel(u, v, s.getAttribute().color);
     return *this;
 }
 

@@ -3,6 +3,7 @@
 
 #include "Color/Color.h"
 #include "Vector/Vector.h"
+#include <cstring>
 
 #include <initializer_list>
 

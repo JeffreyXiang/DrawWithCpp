@@ -2,6 +2,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 
 using namespace std;
 
@@ -23,6 +24,34 @@ void Image::setPixel(uint32_t x, uint32_t y, Color color)
     *(data + 3 * (y * width + x)) = color.blue;
     *(data + 3 * (y * width + x) + 1) = color.green;
     *(data + 3 * (y * width + x) + 2) = color.red;
+}
+
+Image& Image::draw(Figure& s)
+{
+    Figure::AABBdata b = s.tAABB();
+    int xMin = max((int)floor(b.xMin), 0);
+    int yMin = max((int)floor(b.yMin), 0);
+    int xMax = min((int)ceil(b.xMax), (int)width - 1);
+    int yMax = min((int)ceil(b.yMax), (int)height - 1);
+
+    //œ‘ æAABB
+    for (int u = xMin; u <= xMax; u++)
+    {
+        setPixel(u, yMin, {0, 255, 0});
+        setPixel(u, yMax, {0, 255, 0});
+    }
+    for (int v = yMin; v <= yMax; v++)
+    {
+        setPixel(xMin, v, {0, 255, 0});
+        setPixel(xMax, v, {0, 255, 0});
+    }
+
+    for (int u = xMin; u <= xMax; u++)
+        for (int v = yMin; v <= yMax; v++)
+            if (s.tSDF({ (double)u, (double)v }) < 0)
+                setPixel(u, v, s.getAttribute().color);
+    return *this;
+    return *this;
 }
 
 void Image::saveBMP(const char* filename)

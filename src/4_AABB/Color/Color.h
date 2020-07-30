@@ -16,6 +16,11 @@ class Color
         //构造函数，初始值为(0, 0, 0, 0)
         Color();
 
+        //#XXXXXX 构造
+        Color(uint32_t data);
+        Color(uint8_t red, uint8_t green, uint8_t blue);
+        Color(uint8_t red, uint8_t green, uint8_t blue, double alpha);
+
         //用RGB设置颜色，alpha默认为1
         Color& rgb(uint8_t red, uint8_t green, uint8_t blue);
 
