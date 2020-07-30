@@ -1,4 +1,10 @@
 #include "Image.h"
+#include <cstring>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
+using namespace std;
 
 double Image::clamp(double x, double low, double high)
 {
@@ -61,80 +67,6 @@ Color Image::resample(double x, double y, double kx, double ky, resampling type)
     };
 }
 
-void Image::plot(double* data, int points, double xMin, double xMax, double lwidth, Font& font, Color color)
-{
-    stringstream str;
-    double yMax = data[0], yMin = data[0];
-    for (int i = 1; i < points; i++)
-    {
-        yMax = max(yMax, data[i]);
-        yMin = min(yMin, data[i]);
-    }
-    if (yMax - yMin < 2e-6)
-    {
-        yMax += 1e-6;
-        yMin -= 1e-6;
-    }
-    double ys, yd;
-    ys = 0.8 * height / (yMax - yMin);
-    yd = -ys * yMin + 0.1 * height;
-    double x1, y1, x2, y2;
-    Capsule* cap;
-    Figure::Attribute attr = { color, 0, -1 };
-    Figure::Attribute lable = { color.rgb(0, 0, 0), 0, -1 };
-    setBackgroundColor({ 0, 0, 0, 0 });
-
-    cap = new Capsule({ width * 0.05 - 10, height * 0.05 }, { width * 0.95 + 10, height * 0.05 }, 1, lable);
-    draw(*cap);
-    delete cap;
-    cap = new Capsule({ width * 0.05, height * 0.05 - 10 }, { width * 0.05, height * 0.95 + 10 }, 1, lable);
-    draw(*cap);
-    delete cap;
-    int i = round(log10(yMax - yMin) - 1);
-    double s = pow(10, i);
-    double h;
-    for (int y = round(yMin / s); y <= round(yMax / s); y++)
-    {
-        h = height * 0.1 + 0.8 * height * (y * s - yMin) / (yMax - yMin);
-        if (h > 0.05 * height && h < 0.95 * height)
-        {
-            cap = new Capsule({ width * 0.05, h }, { width * 0.05 + 10, h }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-i > 0 ? -i : 0) << y * s;
-            addText(str.str(), { width * 0.05 + 15, h }, { 0, 0.5 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-
-    i = round(log10(xMax - xMin) - 1);
-    s = pow(10, i);
-    for (int x = round(xMin / s); x <= round(xMax / s); x++)
-    {
-        h = width * 0.1 + 0.8 * width * (x * s - xMin) / (xMax - xMin);
-        if (h > 0.05 * width && h < 0.95 * width)
-        {
-            cap = new Capsule({ h, height * 0.05 }, { h, height * 0.05 + 10 }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-i > 0 ? -i : 0) << x * s;
-            addText(str.str(), { h, height * 0.05 - 5 }, { 0.5, 1 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-
-    for (int i = 0; i < points - 1; i++)
-    {
-        x1 = 0.1 * width + i * 0.8 * width / (points - 1);
-        y1 = ys * data[i] + yd;
-        x2 = 0.1 * width + (i + 1) * 0.8 * width / (points - 1);
-        y2 = ys * data[i + 1] + yd;
-        cap = new Capsule({ x1, y1 }, { x2, y2 }, lwidth / 2, attr);
-        draw(*cap);
-        delete cap;
-    }
-}
-   
 Image::Image(uint32_t width, uint32_t height)
 {
     this->width = width;
@@ -142,26 +74,6 @@ Image::Image(uint32_t width, uint32_t height)
     data = new Color[width * height];
     for (int i = 0; i < width * height; i++)
         data[i].rgba(0, 0, 0, 0);
-}
-
-Image::Image(string str, Font& font, Color color)
-{
-    width = 0;
-    this->height = font.getHeight();
-    for (int i = 0; i < str.length(); i++)
-        width += font[str[i]].width;
-    data = new Color[width * height];
-    for (int i = 0; i < width * height; i++)
-        data[i].rgba(0, 0, 0, 0);
-    int temp = 0;
-    for (int i = 0; i < str.length(); i++)
-    {
-        for (int j = 0; j < height; j++)
-            for (int k = 0; k < font[str[i]].width; k++)
-                if (font[str[i]].data[j * font[str[i]].width + k])
-                    overliePixel(k + temp, height - j - 1, color);
-        temp += font[str[i]].width;
-    }
 }
 
 Image::Image(Image& I)
@@ -261,22 +173,6 @@ Image& Image::draw(Figure& s)
     return *this;
 }
 
-void Image::plot(double* data, int points, double lwidth, Font& font, Color color)
-{
-    plot(data, points, 0, points - 1, lwidth, font, color);
-}
-
-void Image::plot(function<double(double)> f, double min, double max, int points, double lwidth, Font& font, Color color)
-{
-    double* data = new double[points];
-    for (int i = 0; i < points; i++)
-    {
-        data[i] = f(min + (max - min) * i / (points - 1));
-    }
-    plot(data, points, min, max, lwidth, font, color);
-    delete[] data;
-}
-
 //按宽高缩放图片（可变形）
 Image Image::resize(int width, int height, resampling type)
 {
@@ -299,75 +195,6 @@ Image Image::resize(int height, resampling type)
 {
     int width = this->width * height / this->height;
     return resize(width, height, type);
-}
-
-Image& Image::insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type)
-{
-    double xMin, xMax, yMin, yMax, u, v;
-    double k = src.height / height;
-    double width = src.width / k;
-    double xL = -center.x * width;
-    double xR = (1 - center.x) * width;
-    double yT = (1 - center.y) * height;
-    double yB = -center.y * height;
-    theta = (theta - 360 * floor(theta / 360)) * PI / 180;
-    double cos_ = cos(theta);
-    double sin_ = sin(theta);
-    if (theta < PI / 2)
-    {
-        xMin = pos.x + xL * cos_ - yT * sin_;
-        xMax = pos.x + xR * cos_ - yB * sin_;
-        yMin = pos.y + xL * sin_ + yB * cos_;
-        yMax = pos.y + xR * sin_ + yT * cos_;
-    }
-    else if (theta < PI)
-    {
-        xMin = pos.x + xR * cos_ - yT * sin_;
-        xMax = pos.x + xL * cos_ - yB * sin_;
-        yMin = pos.y + xL * sin_ + yT * cos_;
-        yMax = pos.y + xR * sin_ + yB * cos_;
-    }
-    else if (theta < 3 * PI / 2)
-    {
-        xMin = pos.x + xR * cos_ - yB * sin_;
-        xMax = pos.x + xL * cos_ - yT * sin_;
-        yMin = pos.y + xR * sin_ + yT * cos_;
-        yMax = pos.y + xL * sin_ + yB * cos_;
-    }
-    else
-    {
-        xMin = pos.x + xL * cos_ - yB * sin_;
-        xMax = pos.x + xR * cos_ - yT * sin_;
-        yMin = pos.y + xR * sin_ + yB * cos_;
-        yMax = pos.y + xL * sin_ + yT * cos_;
-    }
-    xMin = max(xMin, 0.0);
-    yMin = max(yMin, 0.0);
-    xMax = min(xMax, this->width - 1.0);
-    yMax = min(yMax, this->height - 1.0);
-    for (int i = floor(xMin); i <= ceil(xMax); i++)
-        for (int j = floor(yMin); j <= ceil(yMax); j++)
-        {
-            u = center.x * src.width + k * ((i - pos.x) * cos_ + (j - pos.y) * sin_);
-            v = center.y * src.height + k * (-(i - pos.x) * sin_ + (j - pos.y) * cos_);
-            if (u >= 0 && u < src.width && v >= 0 && v < src.height)
-                overliePixel(i, j, src.resample(u, v, 1 / k, 1 / k, type));
-        }
-    return *this;
-}
-
-Image& Image::addText(string str, Vector pos, Vector center, double size, double theta, Font& font, Color color)
-{
-    Image* text = new Image(str, font, color);
-    insert(*text, pos, center, size, theta, NEAREST);
-    delete text;
-    return *this;
-}
-
-Image& Image::addTitle(string str, double size, Font& font, Color color)
-{
-    addText(str, { width / 2.0, (double)height }, { 0.5, 1 }, size, 0, font, color);
-    return *this;
 }
 
 //读取BMP文件

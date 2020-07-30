@@ -78,7 +78,6 @@ Figure::AABBdata Capsule::AABB()
 
 double UnevenCapsule::SDF(Vector pos)
 {
-    //使用static减少重复运算
     double dx = endpoint2.x - endpoint1.x;
     double dy = endpoint2.y - endpoint1.y;
     double h = sqrt(dx * dx + dy * dy);

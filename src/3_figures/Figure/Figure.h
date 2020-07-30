@@ -26,6 +26,7 @@ class Figure
     protected:
         Attribute attribute;
 
+        //线段的SDF
         double segmentSDF(Vector& E1, Vector& E2, Vector& P);
 
     public:
