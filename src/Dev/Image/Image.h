@@ -99,7 +99,10 @@ class Image
         //只按高度缩放图片（不变形）
         Image resize(int height, resampling type);
 
-        //插入图片（源，目标位置，源上对应pos的位置，高度，旋转角，采样方法）
+        //插入图片（源，锚点位置，源上锚点位置，宽度，高度，旋转角，采样方法）
+        Image& insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type);
+
+        //插入图片（源，锚点位置，源上锚点位置，高度，旋转角，采样方法）
         Image& insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type);
 
         //插入文字（文字，目标位置，源上对应pos的位置，高度，旋转角，字体，颜色）

@@ -53,9 +53,6 @@ class Image
         //重采样函数，参数(x坐标，y坐标，重采样比率（小于1为缩小，大于1为放大），重采样类型（枚举中选择）)
         Color resample(double x, double y, double kx, double ky, resampling type);
 
-        //绘制散点折线图（数据，点数，xMin，xMax，线宽，字体，线颜色）
-        void plot(double* data, int points, double xMin, double xMax, double lwidth, Font& font, Color color);
-
     public:
         Image() : width(0), height(0), data(NULL) {}
 
@@ -87,19 +84,16 @@ class Image
         //绘制 Figure
         Image& draw(Figure& s);
 
-        //绘制散点图（时间无关，序号作为横轴）
-        void plot(double* data, int points, double lwidth, Font& font, Color color);
-
-        //绘制函数图像
-        void plot(function<double(double)> f, double min, double max, int points, double lwidth, Font& font, Color color);
-
         //按宽高缩放图片（可变形）
         Image resize(int width, int height, resampling type);
 
         //只按高度缩放图片（不变形）
         Image resize(int height, resampling type);
 
-        //插入图片（源，目标位置，源上对应pos的位置，高度，旋转角，采样方法）
+        //插入图片（源，锚点位置，源上锚点位置，宽度，高度，旋转角，采样方法）
+        Image& insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type);
+
+        //插入图片（源，锚点位置，源上锚点位置，高度，旋转角，采样方法）
         Image& insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type);
 
         //插入文字（文字，目标位置，源上对应pos的位置，高度，旋转角，字体，颜色）

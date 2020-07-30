@@ -323,19 +323,21 @@ Image Image::resize(int height, resampling type)
     return resize(width, height, type);
 }
 
-//插入图片（源，目标位置，源上对应pos的位置，高度，旋转角，采样方法）
-Image& Image::insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type)
+//插入图片（源，锚点位置，源上锚点位置，宽度，高度，旋转角，采样方法）
+Image& Image::insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type)
 {
-    double xMin, xMax, yMin, yMax, u, v;
-    double k = src.height / height;
-    double width = src.width / k;
-    double xL = -center.x * width;
-    double xR = (1 - center.x) * width;
-    double yT = (1 - center.y) * height;
-    double yB = -center.y * height;
     theta = (theta - 360 * floor(theta / 360)) * PI / 180;
     double cos_ = cos(theta);
     double sin_ = sin(theta);
+    double kx = width / src.width;      //缩放比例
+    double ky = height / src.height;
+
+    //计算AABB包围盒
+    double xMin, xMax, yMin, yMax;      //AABB
+    double xL = -center.x * width;      //四角坐标(L,R,T,B: 左右上下)
+    double xR = (1 - center.x) * width;
+    double yT = (1 - center.y) * height;
+    double yB = -center.y * height;
     if (theta < PI / 2)
     {
         xMin = pos.x + xL * cos_ - yT * sin_;
@@ -364,19 +366,29 @@ Image& Image::insert(Image& src, Vector pos, Vector center, double height, doubl
         yMin = pos.y + xR * sin_ + yB * cos_;
         yMax = pos.y + xL * sin_ + yT * cos_;
     }
-    xMin = max(xMin, 0.0);
-    yMin = max(yMin, 0.0);
-    xMax = min(xMax, this->width - 1.0);
-    yMax = min(yMax, this->height - 1.0);
+    xMin = max(xMin, 0.0); xMax = min(xMax, this->width - 1.0);
+    yMin = max(yMin, 0.0); yMax = min(yMax, this->height - 1.0);
+
+    double u, v;                        //插入图上的位置
+
+    //按AABB遍历
     for (int i = floor(xMin); i <= ceil(xMax); i++)
         for (int j = floor(yMin); j <= ceil(yMax); j++)
         {
-            u = center.x * src.width + k * ((i - pos.x) * cos_ + (j - pos.y) * sin_);
-            v = center.y * src.height + k * (-(i - pos.x) * sin_ + (j - pos.y) * cos_);
-            if (u >= 0 && u < src.width && v >= 0 && v < src.height)
-                overliePixel(i, j, src.resample(u, v, 1 / k, 1 / k, type));
+            //  -锚点比例-   ---------锚点到像素的矢量反向旋转----------  -化比例-   -化像素位置-       
+            u = (center.x + ((i - pos.x) * cos_ + (j - pos.y) * sin_) / width) * src.width;
+            v = (center.y + (-(i - pos.x) * sin_ + (j - pos.y) * cos_) / height) * src.height;
+            if (u >= 0 && u < src.width && v >= 0 && v < src.height)    //在插入图内
+                overliePixel(i, j, src.resample(u, v, kx, ky, type));
         }
     return *this;
+}
+
+//插入图片（源，锚点位置，源上锚点位置，高度，旋转角，采样方法）
+Image& Image::insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type)
+{
+    double width = height * src.width / src.height;
+    return insert(src, pos, center, width, height, theta, type);
 }
 
 //插入文字（文字，目标位置，源上对应pos的位置，高度，旋转角，字体，颜色）

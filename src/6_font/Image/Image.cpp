@@ -66,88 +66,6 @@ Color Image::resample(double x, double y, double kx, double ky, resampling type)
         clamp(a, 0, 1)
     };
 }
-
-void Image::plot(double* data, int points, double xMin, double xMax, double lwidth, Font& font, Color color)
-{
-    //获取极值、极值差（最小2e-6）
-    double yMax = data[0], yMin = data[0];
-    for (int i = 1; i < points; i++)
-    {
-        yMax = max(yMax, data[i]);
-        yMin = min(yMin, data[i]);
-    }
-    if (yMax - yMin < 2e-6)
-    {
-        yMax += 1e-6;
-        yMin -= 1e-6;
-    }
-
-    //创建函数值到像素位置的映射(yPos = ys * y + yd)
-    double ys, yd;
-    ys = 0.8 * height / (yMax - yMin);
-    yd = -ys * yMin + 0.1 * height;
-
-    //准备工作
-    Capsule* cap;       //直线对象
-    Figure::Attribute attr = { color, 0, -1 };
-    Figure::Attribute lable = { color.rgb(0, 0, 0), 0, -1 };
-    setBackgroundColor({ 0, 0, 0, 0 });
-
-    //画坐标轴
-    cap = new Capsule({ width * 0.05 - 10, height * 0.05 }, { width * 0.95 + 10, height * 0.05 }, 1, lable);
-    draw(*cap);
-    delete cap;
-    cap = new Capsule({ width * 0.05, height * 0.05 - 10 }, { width * 0.05, height * 0.95 + 10 }, 1, lable);
-    draw(*cap);
-    delete cap;
-
-    //数值标注
-    int om = round(log10(yMax - yMin) - 1);     //数量级
-    double step = pow(10, om);                  //标注间隔
-    double pos;                                 //标注短线像素位置
-    stringstream str;                           //标注数值缓冲区
-    for (int y = round(yMin / step); y <= round(yMax / step); y++)
-    {
-        pos = ys * y * step + yd;
-        if (pos > 0.05 * height && pos < 0.95 * height)
-        {
-            cap = new Capsule({ width * 0.05, pos }, { width * 0.05 + 10, pos }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-om > 0 ? -om : 0) << y * step;
-            addText(str.str(), { width * 0.05 + 15, pos }, { 0, 0.5 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-    om = round(log10(xMax - xMin) - 1);
-    step = pow(10, om);
-    for (int x = round(xMin / step); x <= round(xMax / step); x++)
-    {
-        pos = width * 0.1 + 0.8 * width * (x * step - xMin) / (xMax - xMin);
-        if (pos > 0.05 * width && pos < 0.95 * width)
-        {
-            cap = new Capsule({ pos, height * 0.05 }, { pos, height * 0.05 + 10 }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-om > 0 ? -om : 0) << x * step;
-            addText(str.str(), { pos, height * 0.05 - 5 }, { 0.5, 1 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-
-    //画折线图
-    double x1, y1, x2, y2;
-    for (int i = 0; i < points - 1; i++)
-    {
-        x1 = 0.1 * width + i * 0.8 * width / (points - 1);
-        y1 = ys * data[i] + yd;
-        x2 = 0.1 * width + (i + 1) * 0.8 * width / (points - 1);
-        y2 = ys * data[i + 1] + yd;
-        cap = new Capsule({ x1, y1 }, { x2, y2 }, lwidth / 2, attr);
-        draw(*cap);
-        delete cap;
-    }
-}
    
 Image::Image(uint32_t width, uint32_t height)
 {
@@ -281,24 +199,6 @@ Image& Image::draw(Figure& s)
     return *this;
 }
 
-void Image::plot(double* data, int points, double lwidth, Font& font, Color color)
-{
-    plot(data, points, 0, points - 1, lwidth, font, color);
-}
-
-void Image::plot(function<double(double)> f, double min, double max, int points, double lwidth, Font& font, Color color)
-{
-    //生成散点数据
-    double* data = new double[points];
-    for (int i = 0; i < points; i++)
-    {
-        data[i] = f(min + (max - min) * i / (points - 1));
-    }
-    //绘制折线图
-    plot(data, points, min, max, lwidth, font, color);
-    delete[] data;
-}
-
 //按宽高缩放图片（可变形）
 Image Image::resize(int width, int height, resampling type)
 {
@@ -323,19 +223,21 @@ Image Image::resize(int height, resampling type)
     return resize(width, height, type);
 }
 
-//插入图片（源，目标位置，源上对应pos的位置，高度，旋转角，采样方法）
-Image& Image::insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type)
+//插入图片（源，锚点位置，源上锚点位置，宽度，高度，旋转角，采样方法）
+Image& Image::insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type)
 {
-    double xMin, xMax, yMin, yMax, u, v;
-    double k = src.height / height;
-    double width = src.width / k;
-    double xL = -center.x * width;
-    double xR = (1 - center.x) * width;
-    double yT = (1 - center.y) * height;
-    double yB = -center.y * height;
     theta = (theta - 360 * floor(theta / 360)) * PI / 180;
     double cos_ = cos(theta);
     double sin_ = sin(theta);
+    double kx = width / src.width;      //缩放比例
+    double ky = height / src.height;
+
+    //计算AABB包围盒
+    double xMin, xMax, yMin, yMax;      //AABB
+    double xL = -center.x * width;      //四角坐标(L,R,T,B: 左右上下)
+    double xR = (1 - center.x) * width;
+    double yT = (1 - center.y) * height;
+    double yB = -center.y * height;
     if (theta < PI / 2)
     {
         xMin = pos.x + xL * cos_ - yT * sin_;
@@ -364,19 +266,29 @@ Image& Image::insert(Image& src, Vector pos, Vector center, double height, doubl
         yMin = pos.y + xR * sin_ + yB * cos_;
         yMax = pos.y + xL * sin_ + yT * cos_;
     }
-    xMin = max(xMin, 0.0);
-    yMin = max(yMin, 0.0);
-    xMax = min(xMax, this->width - 1.0);
-    yMax = min(yMax, this->height - 1.0);
+    xMin = max(xMin, 0.0); xMax = min(xMax, this->width - 1.0);
+    yMin = max(yMin, 0.0); yMax = min(yMax, this->height - 1.0);
+
+    double u, v;                        //插入图上的位置
+    
+    //按AABB遍历
     for (int i = floor(xMin); i <= ceil(xMax); i++)
         for (int j = floor(yMin); j <= ceil(yMax); j++)
         {
-            u = center.x * src.width + k * ((i - pos.x) * cos_ + (j - pos.y) * sin_);
-            v = center.y * src.height + k * (-(i - pos.x) * sin_ + (j - pos.y) * cos_);
-            if (u >= 0 && u < src.width && v >= 0 && v < src.height)
-                overliePixel(i, j, src.resample(u, v, 1 / k, 1 / k, type));
+            //  -锚点比例-   ---------锚点到像素的矢量反向旋转----------  -化比例-   -化像素位置-       
+            u = (center.x + ((i - pos.x) * cos_ + (j - pos.y) * sin_) / width) * src.width;
+            v = (center.y + (-(i - pos.x) * sin_ + (j - pos.y) * cos_) / height) * src.height;
+            if (u >= 0 && u < src.width && v >= 0 && v < src.height)    //在插入图内
+                overliePixel(i, j, src.resample(u, v, kx, ky, type));
         }
     return *this;
+}
+
+//插入图片（源，锚点位置，源上锚点位置，高度，旋转角，采样方法）
+Image& Image::insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type)
+{
+    double width = height * src.width / src.height;
+    return insert(src, pos, center, width, height, theta, type);
 }
 
 //插入文字（文字，目标位置，源上对应pos的位置，高度，旋转角，字体，颜色）
