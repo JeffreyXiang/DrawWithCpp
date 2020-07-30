@@ -1,11 +1,11 @@
 #ifndef SHAPE_H
 #define SHAPE_H
 
-#include "Color/Color.h"
-#include "Vector/Vector.h"
-#include <cstring>
-
+#include <cmath>
 #include <initializer_list>
+#include <algorithm>
+#include <Color/Color.h>
+#include <Vector/Vector.h>
 
 #define PI 3.14159265358979323846
 
@@ -82,13 +82,14 @@ class Capsule : public Figure
         double SDF(Vector pos);
 };
 
+//不等宽胶囊
 class UnevenCapsule : public Figure
 {
     private:
-        Vector endpoint1;
-        Vector endpoint2;
-        double radius1;
-        double radius2;
+        Vector endpoint1;       //端点1
+        Vector endpoint2;       //端点2
+        double radius1;         //端点1半径
+        double radius2;         //端点2半径
 
     public:
         UnevenCapsule(Vector endpoint1, Vector endpoint2, double radius1, double radius2, Attribute attribute) : Figure(attribute)
@@ -112,12 +113,13 @@ class UnevenCapsule : public Figure
         double SDF(Vector pos);
 };
 
+//矩形
 class Rectangle : public Figure
 {
     private:
-        Vector center;
-        Vector size;
-        double theta;
+        Vector center;      //中心
+        Vector size;        //尺寸（半长，半宽）
+        double theta;       //旋转角
 
     public:
         Rectangle(Vector center, Vector size, double theta, Attribute attribute) :
@@ -129,10 +131,11 @@ class Rectangle : public Figure
         double SDF(Vector pos);
 };
 
+//三角形
 class Triangle : public Figure
 {
     private:
-        Vector vertex1;
+        Vector vertex1;     //三个顶点
         Vector vertex2;
         Vector vertex3;
 
@@ -146,12 +149,13 @@ class Triangle : public Figure
         double SDF(Vector pos);
 };
 
+//扇形
 class Pie : public Figure
 {
     private:
-        Vector center;
-        double radius;
-        double theta1;
+        Vector center;      //圆心
+        double radius;      //半径
+        double theta1;      //起始角度
         double theta2;
 
     public:
@@ -165,13 +169,14 @@ class Pie : public Figure
         double SDF(Vector pos);
 };
 
+//弧
 class Arc : public Figure
 {
     private:
-        Vector center;
-        double radius1;
-        double radius2;
-        double theta1;
+        Vector center;      //圆心
+        double radius1;     //弧半径
+        double radius2;     //线半径
+        double theta1;      //起始角度
         double theta2;
 
     public:
@@ -186,11 +191,12 @@ class Arc : public Figure
         double SDF(Vector pos);
 };
 
+//多边形
 class Polygon : public Figure
 {
     private:
-        Vector* vertex;
-        int vertexNumber;
+        Vector* vertex;     //多个顶点
+        int vertexNumber;   //顶点数
 
     public:
         Polygon(initializer_list<Vector> vertexes, Attribute attribute) : Figure(attribute)
@@ -203,13 +209,14 @@ class Polygon : public Figure
         double SDF(Vector pos);
 };
 
+//椭圆
 class Ellipse : public Figure
 {
     private:
-        Vector center;
-        double a;
-        double b;
-        double theta;
+        Vector center;      //中心
+        double a;           //半长
+        double b;           //半宽
+        double theta;       //旋转角
 
     public:
         Ellipse(Vector center, double a, double b, double theta, Attribute attribute) :
@@ -221,10 +228,11 @@ class Ellipse : public Figure
         double SDF(Vector pos);
 };
 
+//二次贝塞尔
 class QuadraticBezier : public Figure
 {
     private:
-        Vector A;
+        Vector A;   //三个控制点
         Vector B;
         Vector C;
 
