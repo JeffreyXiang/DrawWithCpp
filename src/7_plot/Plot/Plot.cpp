@@ -33,16 +33,17 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
     }
 
     int om ;            //数量级
-    double step;        //标注间隔
-    double pos;         //标注刻度像素位置
-    stringstream str;   //标注数值缓冲区
+    double step;        //刻度间隔
+    double pos;         //刻度像素位置
+    stringstream str;   //刻度数值缓冲区
 
-    //计算纵轴标注宽度
+    //计算纵轴刻度数值区域宽度
     double verNumW = 0;
     if (verScaleEnabled && verNumberEnabled)
     {
         om = round(log10(yMax - yMin) - 1);     //数量级
         step = pow(10, om);                     //标注间隔
+        //计算最大的刻度数值宽度作为区域宽度
         for (int y = round(yMin / step); y <= round(yMax / step); y++)
         {
             str << fixed << setprecision(-om > 0 ? -om : 0) << y * step;
@@ -51,19 +52,19 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
         }
     }
 
-    //计算横轴标注宽度
+    //计算横轴刻度数值区域宽度
     double horNumW = (horScaleEnabled && horNumberEnabled) ? rulerHeight : 0;
 
-    //计算刻度宽度
-    double verSclW = verScaleEnabled ? 10 : 0;
-    double horSclW = horScaleEnabled ? 10 : 0;
+    //计算刻度线宽度
+    double verSclW = verScaleEnabled ? 15 : 0;
+    double horSclW = horScaleEnabled ? 15 : 0;
 
-    //计算标签宽度
+    //计算文字标签宽度
     double titleW = title.text ? 1.5 * title.height : 0;
     double verNameW = verName.text ? 1.5 * verName.height : 0;
     double horNameW = horName.text ? 1.5 * horName.height : 0;
 
-    //设置最外层画图区域参数
+    //设置外层区域参数
     double outXMin = max(25.0, 0.05 * image.getWidth());
     double outXMax = image.getWidth() - outXMin;
     double outYMin = max(25.0, 0.05 * image.getHeight());
@@ -75,13 +76,13 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
     double rulerYMin = outYMin + horNameW + horNumW + horSclW;
     double rulerYMax = outYMax - titleW;
 
-    //设置绘图区域参数
+    //设置绘制区域参数
     double plotXMin = rulerXMin + 0.05 * (rulerXMax - rulerXMin);
     double plotXMax = rulerXMax - 0.05 * (rulerXMax - rulerXMin);
     double plotYMin = rulerYMin + 0.05 * (rulerYMax - rulerYMin);
     double plotYMax = rulerYMax - 0.05 * (rulerYMax - rulerYMin);
 
-    //创建函数值到像素位置的映射(p' = s * p + d)
+    //创建函数值到像素位置的映射(x' = s * x + d)
     double ys, yd, xs, xd;
     ys = (plotYMax - plotYMin) / (yMax - yMin);
     yd = -ys * yMin + plotYMin;
@@ -108,14 +109,16 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
         step = pow(10, om);                     //标注间隔
         for (int y = floor(yMin / step); y <= ceil(yMax / step); y++)
         {
-            pos = ys * y * step + yd;
+            pos = ys * y * step + yd;           //计算刻度的图上坐标
             if (pos > rulerYMin && pos < rulerYMax)
             {
+                //绘制刻度线
                 cap = new Capsule({ rulerXMin, pos }, { rulerXMin - 10, pos }, 1, rulerAttr);
                 image.draw(*cap);
                 delete cap;
                 if (verNumberEnabled)
                 {
+                    //绘制刻度数值
                     str << fixed << setprecision(-om > 0 ? -om : 0) << y * step;
                     image.addText(str.str(), { rulerXMin - 15, pos }, { 1, 0.5 }, rulerHeight, 0, *rulerFont, rulerColor);
                     str.str("");
@@ -147,11 +150,11 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
 
     //画标签
     if (title.text)
-        image.addText(title.text, { width / 2.0, outYMax }, { 0.5, 1 }, title.height, 0, *title.font, title.color);
+        image.addText(title.text, { width / 2.0, outYMax }, { 0.5, 1 }/*水平居中，顶部对齐*/, title.height, 0, *title.font, title.color);
     if (verName.text)
-        image.addText(verName.text, { outXMin, height / 2.0 }, { 0.5, 0 }, verName.height, -90, *verName.font, verName.color);
+        image.addText(verName.text, { outXMin, height / 2.0 }, { 0.5, 0 }/*水平居中，底部对齐*/, verName.height, -90, *verName.font, verName.color);
     if (horName.text)
-        image.addText(horName.text, { width / 2.0, outYMin }, { 0.5, 0 }, horName.height, 0, *horName.font, horName.color);
+        image.addText(horName.text, { width / 2.0, outYMin }, { 0.5, 0 }/*水平居中，底部对齐*/, horName.height, 0, *horName.font, horName.color);
 
     //画折线图
     double x1, y1, x2, y2;
@@ -161,10 +164,12 @@ void Plot::plotRaw(Image& image, vector<Discrete> data, int points, double xMin,
         double lwidth = data[i].lineWidth / 2;
         for (int j = 1; j < points - 1; j++)
         {
+            //计算函数上的坐标对应在图中的坐标
             x1 = plotXMin + j * (plotXMax - plotXMin) / (points - 1);
             y1 = ys * data[i].data[j] + yd;
             x2 = plotXMin + (j + 1) * (plotXMax - plotXMin) / (points - 1);
             y2 = ys * data[i].data[j + 1] + yd;
+            //连接一条直线
             cap = new Capsule({ x1, y1 }, { x2, y2 }, lwidth, funcAttr);
             image.draw(*cap);
             delete cap;
