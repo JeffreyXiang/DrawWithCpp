@@ -1,9 +1,7 @@
 #include "Image.h"
 #include <cstring>
 #include <iostream>
-#include <iomanip>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
 
 double Image::clamp(double x, double low, double high)
@@ -191,8 +189,11 @@ Image& Image::draw(Figure& s)
         {
             alpha = -s.tSDF({ (double)u, (double)v }) + 0.5;
             alpha = clamp(alpha, 0, 1);
-            final.ca(s.getAttribute().color, alpha);
-            overliePixel(u, v, final);
+            if (alpha > 0)
+            {
+                final.ca(s.getAttribute().color, alpha);
+                overliePixel(u, v, final);
+            }
         }
     return *this;
 }

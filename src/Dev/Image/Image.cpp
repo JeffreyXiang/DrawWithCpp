@@ -162,10 +162,8 @@ Image::Image(uint32_t width, uint32_t height)
 Image::Image(string str, Font& font, Color color)
 {
     //计算文字宽高
-    width = 0;
-    this->height = font.getHeight();
-    for (int i = 0; i < str.length(); i++)
-        width += font[str[i]].width;
+    width = font.stringWidth(str);
+    height = font.getHeight();
 
     //创建画布
     data = new Color[width * height];

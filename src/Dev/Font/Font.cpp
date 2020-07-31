@@ -45,3 +45,12 @@ Font::Font(const char* filename, int height)
 	}
 	delete[] data;
 }
+
+//»ñÈ¡×Ö·û´®¿í¶È
+int Font::stringWidth(string str)
+{
+	int width = 0;
+	for (int i = 0; i < str.length(); i++)
+		width += (*this)[str[i]].width;
+	return width;
+}

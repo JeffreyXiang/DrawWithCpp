@@ -72,6 +72,9 @@ class Image
         Image& operator=(Image& I);     //拷贝赋值
         Image& operator=(Image&& I);    //转移赋值
 
+        int getHeight() { return height; }
+        int getWidth() { return width; }
+
         //设置背景
         void setBackgroundColor(Color color);
 

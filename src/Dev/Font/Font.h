@@ -34,6 +34,10 @@ class Font
 
 		//获取字体高度
 		int getHeight() { return height; }
+
+		//获取字符串宽度
+		int stringWidth(string str);
+		double stringWidth(string str, double height) { return stringWidth(str) * height / this->height; }
 };
 
 #endif
