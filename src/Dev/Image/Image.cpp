@@ -1,9 +1,7 @@
 #include "Image.h"
 #include <cstring>
 #include <iostream>
-#include <iomanip>
 #include <fstream>
-#include <sstream>
 #include <algorithm>
 
 double Image::clamp(double x, double low, double high)
@@ -65,88 +63,6 @@ Color Image::resample(double x, double y, double kx, double ky, resampling type)
         (uint8_t)clamp(b, 0, 255),
         clamp(a, 0, 1)
     };
-}
-
-void Image::plot(double* data, int points, double xMin, double xMax, double lwidth, Font& font, Color color)
-{
-    //获取极值、极值差（最小2e-6）
-    double yMax = data[0], yMin = data[0];
-    for (int i = 1; i < points; i++)
-    {
-        yMax = max(yMax, data[i]);
-        yMin = min(yMin, data[i]);
-    }
-    if (yMax - yMin < 2e-6)
-    {
-        yMax += 1e-6;
-        yMin -= 1e-6;
-    }
-
-    //创建函数值到像素位置的映射(yPos = ys * y + yd)
-    double ys, yd;
-    ys = 0.8 * height / (yMax - yMin);
-    yd = -ys * yMin + 0.1 * height;
-
-    //准备工作
-    Capsule* cap;       //直线对象
-    Figure::Attribute attr = { color, 0, -1 };
-    Figure::Attribute lable = { color.rgb(0, 0, 0), 0, -1 };
-    setBackgroundColor({ 0, 0, 0, 0 });
-
-    //画坐标轴
-    cap = new Capsule({ width * 0.05 - 10, height * 0.05 }, { width * 0.95 + 10, height * 0.05 }, 1, lable);
-    draw(*cap);
-    delete cap;
-    cap = new Capsule({ width * 0.05, height * 0.05 - 10 }, { width * 0.05, height * 0.95 + 10 }, 1, lable);
-    draw(*cap);
-    delete cap;
-
-    //数值标注
-    int om = round(log10(yMax - yMin) - 1);     //数量级
-    double step = pow(10, om);                  //标注间隔
-    double pos;                                 //标注短线像素位置
-    stringstream str;                           //标注数值缓冲区
-    for (int y = round(yMin / step); y <= round(yMax / step); y++)
-    {
-        pos = ys * y * step + yd;
-        if (pos > 0.05 * height && pos < 0.95 * height)
-        {
-            cap = new Capsule({ width * 0.05, pos }, { width * 0.05 + 10, pos }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-om > 0 ? -om : 0) << y * step;
-            addText(str.str(), { width * 0.05 + 15, pos }, { 0, 0.5 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-    om = round(log10(xMax - xMin) - 1);
-    step = pow(10, om);
-    for (int x = round(xMin / step); x <= round(xMax / step); x++)
-    {
-        pos = width * 0.1 + 0.8 * width * (x * step - xMin) / (xMax - xMin);
-        if (pos > 0.05 * width && pos < 0.95 * width)
-        {
-            cap = new Capsule({ pos, height * 0.05 }, { pos, height * 0.05 + 10 }, 1, lable);
-            draw(*cap);
-            delete cap;
-            str << fixed << setprecision(-om > 0 ? -om : 0) << x * step;
-            addText(str.str(), { pos, height * 0.05 - 5 }, { 0.5, 1 }, 32, 0, font, { 0,0,0 });
-            str.str("");
-        }
-    }
-
-    //画折线图
-    double x1, y1, x2, y2;
-    for (int i = 0; i < points - 1; i++)
-    {
-        x1 = 0.1 * width + i * 0.8 * width / (points - 1);
-        y1 = ys * data[i] + yd;
-        x2 = 0.1 * width + (i + 1) * 0.8 * width / (points - 1);
-        y2 = ys * data[i + 1] + yd;
-        cap = new Capsule({ x1, y1 }, { x2, y2 }, lwidth / 2, attr);
-        draw(*cap);
-        delete cap;
-    }
 }
    
 Image::Image(uint32_t width, uint32_t height)
@@ -273,28 +189,13 @@ Image& Image::draw(Figure& s)
         {
             alpha = -s.tSDF({ (double)u, (double)v }) + 0.5;
             alpha = clamp(alpha, 0, 1);
-            final.ca(s.getAttribute().color, alpha);
-            overliePixel(u, v, final);
+            if (alpha > 0)
+            {
+                final.ca(s.getAttribute().color, alpha);
+                overliePixel(u, v, final);
+            }
         }
     return *this;
-}
-
-void Image::plot(double* data, int points, double lwidth, Font& font, Color color)
-{
-    plot(data, points, 0, points - 1, lwidth, font, color);
-}
-
-void Image::plot(function<double(double)> f, double min, double max, int points, double lwidth, Font& font, Color color)
-{
-    //生成散点数据
-    double* data = new double[points];
-    for (int i = 0; i < points; i++)
-    {
-        data[i] = f(min + (max - min) * i / (points - 1));
-    }
-    //绘制折线图
-    plot(data, points, min, max, lwidth, font, color);
-    delete[] data;
 }
 
 //按宽高缩放图片（可变形）
@@ -368,7 +269,7 @@ Image& Image::insert(Image& src, Vector pos, Vector center, double width, double
     yMin = max(yMin, 0.0); yMax = min(yMax, this->height - 1.0);
 
     double u, v;                        //插入图上的位置
-
+    
     //按AABB遍历
     for (int i = floor(xMin); i <= ceil(xMax); i++)
         for (int j = floor(yMin); j <= ceil(yMax); j++)

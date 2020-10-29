@@ -8,6 +8,7 @@
 #include <CSGObj/CSGObj.h>
 #include <Image/Image.h>
 #include <Font/Font.h>
+#include <Plot/Plot.h>
 
 using namespace std;
 
@@ -179,6 +180,45 @@ double f(double x)
     return res;
 }
 
+double Legendre(int n, double x)//求n阶勒让德多项式的值的函数
+{
+    double p;
+    if (n == 0)
+    {
+        p = 1;
+    }
+    else if (n == 1)
+    {
+        p = x;
+    }
+    else
+    {
+        p = ((2 * n - 1) * x * Legendre(n - 1, x) - (n - 1) * Legendre(n - 2, x)) / n;
+    }
+
+    return p;
+}
+
+double u_tEQLu(double t, double x)
+{
+    if (t == 0)
+        return 0;
+    return 1 / sqrt(t) * exp(-x * x / t);
+}
+
+double FS(double x, int N)
+{
+    double sum = 0;
+    for (size_t i = 0; i < N; i++)
+    {
+        sum += 1.0 / (2 * i + 1) * sin((2 * i + 1) * x);
+    }
+    return sum;
+}
+
+#include <sstream>
+#include <iomanip>
+
 int main()
 {
     clock_t startTime = clock();
@@ -193,11 +233,25 @@ int main()
         0xff9804,
     };
     Font font("../font/Dengxian_Light_ASCII_512x.bin", 512);
-    Image image(3000, 500);
-    //image.readBMP("../data/20200616142640.bmp");
-    //image = image.resize(250, Image::BICUBIC);
-    image.plot(f,-4,4,4096,3,font,{0,128,192});
-    image.addTitle("x'(t)",72,font,{0,0,0});
+
+    Plot plot;
+    plot.setDefaultFont(font);
+    plot.setTitle("Three-Phase AC");
+    plot.setHorName("t(s)");
+    plot.setVerName("U(V)");
+    plot.setHorMarkEnabled(true);
+    plot.setVerMarkEnabled(true);
+
+    vector<Plot::Continuous> funcs = {
+        { [](double x) {return 311.127 * sin(100 * PI * x + 0 * PI / 3);}, { 255, 0, 0 }, 4 },
+        { [](double x) {return 311.127 * sin(100 * PI * x + 2 * PI / 3);}, { 0, 255, 0 }, 4 },
+        { [](double x) {return 311.127 * sin(100 * PI * x + 4 * PI / 3);}, { 0, 0, 255 }, 4 }
+    };
+
+    Image image = plot.plot(0, 0.04, 1024, funcs);
+    image.saveBMP("../data/output.bmp");
+
+    //Image image = plot.plot(-5, 5, 1024, funcs);
     image.saveBMP("../data/output.bmp");
     clock_t endTime = clock();
     cout<<"Elapsed time: "<<(double)(endTime - startTime) / CLOCKS_PER_SEC<<"s\n";
