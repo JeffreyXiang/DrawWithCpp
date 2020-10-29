@@ -241,6 +241,7 @@ int main()
     plot.setVerName("U(V)");
     plot.setHorMarkEnabled(true);
     plot.setVerMarkEnabled(true);
+    plot.setAutoRangeEnabled(true);
 
     vector<Plot::Continuous> funcs = {
         { [](double x) {return 311.127 * sin(100 * PI * x + 0 * PI / 3);}, { 255, 0, 0 }, 4 },
@@ -248,11 +249,9 @@ int main()
         { [](double x) {return 311.127 * sin(100 * PI * x + 4 * PI / 3);}, { 0, 0, 255 }, 4 }
     };
 
-    Image image = plot.plot(0, 0.04, 1024, funcs);
+    Image image = plot.plot(0, 0.04, 50, funcs);
     image.saveBMP("../data/output.bmp");
 
-    //Image image = plot.plot(-5, 5, 1024, funcs);
-    image.saveBMP("../data/output.bmp");
     clock_t endTime = clock();
     cout<<"Elapsed time: "<<(double)(endTime - startTime) / CLOCKS_PER_SEC<<"s\n";
     return 0;
