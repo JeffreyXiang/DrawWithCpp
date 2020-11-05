@@ -7,5 +7,7 @@ include(cmake/XCMake.cmake)
 
 Xi_projectInit()
 
+enable_language(CUDA)
+
 Xi_addAllSubDir(src)
 

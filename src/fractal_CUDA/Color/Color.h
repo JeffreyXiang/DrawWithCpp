@@ -43,4 +43,14 @@ class Color
         static Color overlay(Color C1, Color C2);
 };
 
+/******* CUDA *******/
+
+typedef struct
+{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+    double alpha;
+} CU_Color;
+
 #endif

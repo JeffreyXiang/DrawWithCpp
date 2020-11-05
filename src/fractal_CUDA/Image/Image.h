@@ -2,9 +2,9 @@
 #define IMAGE_H
 
 #include "Color/Color.h"
-#include "Figure/Figure.h"
-#include "Font/Font.h"
 #include <functional>
+
+#define PI 3.1415926535897932384626
 
 class Image
 {
@@ -69,7 +69,7 @@ class Image
         Image(uint32_t width, uint32_t height);
 
         //创建文字原图（一一对应填充）
-        Image(string str, Font& font, Color color);
+        //Image(string str, Font& font, Color color);
 
         Image(Image& I);    //拷贝构造
         Image(Image&& I);   //移动构造
@@ -101,7 +101,7 @@ class Image
         void overlayPixel(uint32_t x, uint32_t y, Color color);
         
         //绘制 Figure
-        Image& draw(Figure& s);
+        //Image& draw(Figure& s);
 
         //按宽高缩放图片（可变形）
         Image resize(int width, int height, resampling type);
@@ -110,16 +110,16 @@ class Image
         Image resize(int height, resampling type);
 
         //插入图片（源，锚点位置，源上锚点位置，宽度，高度，旋转角，采样方法）
-        Image& insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type);
+        //Image& insert(Image& src, Vector pos, Vector center, double width, double height, double theta, resampling type);
 
         //插入图片（源，锚点位置，源上锚点位置，高度，旋转角，采样方法）
-        Image& insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type);
+        //Image& insert(Image& src, Vector pos, Vector center, double height, double theta, resampling type);
 
         //插入文字（文字，目标位置，源上对应pos的位置，高度，旋转角，字体，颜色）
-        Image& addText(string str, Vector pos, Vector center, double size, double theta, Font& font, Color color);
+        //Image& addText(string str, Vector pos, Vector center, double size, double theta, Font& font, Color color);
 
         //插入标题（插入文字的预定义版本）
-        Image& addTitle(string str, double size, Font& font, Color color);
+        //Image& addTitle(string str, double size, Font& font, Color color);
 
         //BMP文件头结构体
         #pragma pack(2)     //按2字节对齐，避免结构体中空位
